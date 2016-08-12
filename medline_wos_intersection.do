@@ -65,7 +65,7 @@ save `hold', replace
 
 cd $inpath2
 use medline14_mesh_clean, clear
-keep pmid
+keep filenum pmid
 duplicates drop
 
 merge 1:1 pmid using `hold'
@@ -74,7 +74,7 @@ keep if _merge==3
 drop _merge
 keep if pubyear>=1983 & pubyear<=2012
 
-sort pmid pubyear
+sort filenum pmid pubyear
 compress
 cd $outpath
 save medline_wos_intersection, replace
