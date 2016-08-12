@@ -1,4 +1,15 @@
 
+clear
+set more off
+
+**************************************************************************************************
+**************************************************************************************************
+* User must set the outpath and the inpath.
+global inpath1="Path to WOS data"
+global inpath2="B:\Research\RAWDATA\MEDLINE\2014\Processed"
+global outpath="B:\Research\RAWDATA\MEDLINE\2014\Processed"
+**************************************************************************************************
+
 ********************************************************************************
 ********************************************************************************
 * Eligible MEDLINE articles
@@ -13,7 +24,7 @@
 * Import columns 1 through 3 of the wos_summary.csv file. 
 *   The first column gives the wos_uid, which uniquely identifies articles in WOS
 *   The second column gives the publication year
-*cd path to WOS data
+cd $inpath1
 import delimited "wos_summary.csv", clear delimiter(comma) varnames(1) colrange(1:3)
 keep wos_uid pubyear
 drop if regex(wos_uid, "(15085762 rows)")
@@ -25,7 +36,7 @@ save `hold', replace
 *   The first column is an internal ID created by Huifeng
 *   The second column is the PMID
 *   The third column gives the wos_uid, which uniquely identifies articles in WOS*
-*cd path to WOS data
+cd $inpath1
 import delimited "wos_medline_bridge.csv", clear delimiter(comma) varnames(1)
 drop if regex(id, "(15085943 rows)")
 destring id, replace
@@ -47,53 +58,27 @@ duplicates drop
 tempfile hold
 save `hold', replace
 
-save temp, replace
+*Note that the following restrictions have already been put in place in the mesh_aggregation file:
+*   * status=="MEDLINE"
+*   * Not a retraction
+*   * Has a 4-digit MeSH term
 
-*cd path to WOS data
-use temp, clear
-tempfile hold
-save `hold', replace
-
-cd B:\Research\RAWDATA\MEDLINE\2014\Processed\Dates
-use medline14_dates, clear
-keep if version==1
-keep filenum pmid year
-merge 1:1 pmid using `hold'
-* There are 7,875,894 articles in MEDLINE that are not in the WOS file
-drop if _merge==1
-* There are 579,311 articles in the WOS file that are not in MEDLINE
-drop if _merge==2
-drop _merge
-save `hold', replace
-
-* Attach only articles with 4-digit MeSH terms
-cd B:\Research\RAWDATA\MEDLINE\2014\Processed\MeSHAgg
-use medline14_mesh_4digit, clear
-keep if version==1
-keep version pmid
-duplicates drop
-merge 1:1 pmid using `hold'
-drop if _merge==1
-gen meshid4_ind=0
-replace meshid4_ind=1 if _merge==3
-drop _merge
-tempfile hold
-save `hold', replace
-
-cd B:\Research\RAWDATA\MEDLINE\2014\Processed\PubTypes
-use medline14_pubtypes_all, clear
-keep if pubtype=="Retraction of Publication"
+cd $inpath2
+use medline14_mesh_clean, clear
 keep pmid
-merge 1:1 pmid using `hold'
-drop if _merge==1
-gen retraction_ind=0
-replace retraction_ind=1 if _merge==3
-drop _merge
+duplicates drop
 
-drop version
-order filenum pmid pubyear
-sort filenum pmid
+merge 1:1 pmid using `hold'
+tab _merge
+keep if _merge==3
+drop _merge
+keep if pubyear>=1983 & pubyear<=2012
+
+sort pmid pubyear
 compress
-cd B:\Research\RAWDATA\MEDLINE\2014\Processed
+cd $outpath
 save medline_wos_intersection, replace
-********************************************************************************
+
+
+
+
