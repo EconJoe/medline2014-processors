@@ -1,9 +1,19 @@
-clear
-gen filenum=.
-cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Vintage
-save ngrams_vintage_3, replace
 
-local initialfiles 1 26 51 76 101 126 151 176 201 226 251 276 301 326 351 376 401 426 451 476 501 526 551 576 601 626 651 676 701 726
+**************************************************************************************************
+**************************************************************************************************
+* User must set the outpath and the inpath.
+global inpath1="B:\Research\RAWDATA\MEDLINE\2014\Parsed\NGrams\dtafiles"
+global inpath2="B:\Research\RAWDATA\MEDLINE\2014\Processed"
+global outpath="B:\Research\RAWDATA\MEDLINE\2014\Processed"
+**************************************************************************************************
+
+clear
+gen ngram=""
+gen vintage=.
+cd $outpath
+save ngrams_vintage, replace
+
+local initialfiles 1 26 76 101 126 176 201 226 251 276 301 326 351 376 401 426 451 476 501 526 551 576 601 626 651 676 701 726
 local terminalfile=746
 local fileinc=24
 
@@ -20,14 +30,14 @@ foreach h in `initialfiles' {
 	clear
 	set more off
 	gen ngram=""
-	cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Vintage
-	save ngrams_vintage_`startfile'_`endfile'_3, replace
+	cd $outpath
+	save ngrams_vintage_`startfile'_`endfile', replace
 
 	forvalues i=`startfile'/`endfile' {
 
 		display in red "------ File `i' --------"
 
-		cd B:\Research\RAWDATA\MEDLINE\2014\Parsed\NGrams\dtafiles
+		cd $inpath1
 		use medline14_`i'_ngrams, clear
 		keep if status=="MEDLINE"
 		keep if version==1
@@ -35,31 +45,34 @@ foreach h in `initialfiles' {
 		tempfile hold
 		save `hold', replace
 
-		cd B:\Research\RAWDATA\MEDLINE\2014\Processed
+		cd $inpath2
 		use medline_wos_intersection if filenum==`i'
 		merge 1:m pmid using `hold'
 		keep if _merge==3
-		drop if meshid4_ind==0
-		drop if retraction_ind==1
-		keep pmid ngram pubyear
+		keep pmid pubyear ngram
 		rename pubyear vintage
 
 		if (_N>0) {
-			collapse (min) vintage, by(ngram)
+			collapse (min) vintage, by(pmid ngram) fast
+			
 			compress
-			cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Vintage
-			append using ngrams_vintage_`startfile'_`endfile'_3
-			collapse (min) vintage, by(ngram)
-			save ngrams_vintage_`startfile'_`endfile'_3, replace
+			cd $outpath
+			append using ngrams_vintage_`startfile'_`endfile'
+			collapse (min) vintage, by(ngram) fast
+			save ngrams_vintage_`startfile'_`endfile', replace
 		}
 	}
-
-	cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Vintage
-	use ngrams_vintage_3, clear
-	append using ngrams_vintage_`startfile'_`endfile'_3
-	collapse (min) vintage, by(ngram)
-	compress
-	sort ngram
-	save ngrams_vintage_3, replace
-	*erase ngrams_vintage_`startfile'_`endfile'.dta
+	
+	cd $outpath
+	use ngrams_vintage_`startfile'_`endfile', clear
+	if (_N>0) {
+		cd $outpath
+		use ngrams_vintage, clear
+		append using ngrams_vintage_`startfile'_`endfile'
+		collapse (min) vintage, by(ngram) fast
+		compress
+		sort ngram
+		save ngrams_vintage, replace
+	}
+	erase ngrams_vintage_`startfile'_`endfile'.dta
 }
