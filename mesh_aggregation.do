@@ -22,7 +22,7 @@ drop if type=="Qualifier"
 keep filenum pmid version mesh
 sort pmid version
 compress
-cd $outpath\Data
+cd $outpath
 save medline14_mesh_clean, replace
 **************************************************
 
@@ -59,7 +59,7 @@ save `mesh', replace
 * Create a temporary file to hold the aggregated MeSH terms. This will be deleted in the end.
 clear
 gen filenum=.
-cd $outpath\Data
+cd $outpath
 save medline14_mesh_clean_temp, replace
 **************************************************
 
@@ -75,7 +75,7 @@ forvalues i=`startfile'(`increment')`endfile' {
 	
 	display in red "------- Aggregating MeSH terms from MEDLINE files `file1'-`file2' -----"
 	
-	cd $outpath\Data
+	cd $outpath
 	use medline14_mesh_clean if filenum>=`file1' & filenum<=`file2', clear
 	
 	* Eliminate retractions and non-MEDLINE status articles
@@ -124,14 +124,14 @@ forvalues i=`startfile'(`increment')`endfile' {
 	rename meshid meshid4
 	rename weight mesh4_weight
 	
-	cd $outpath\Data
+	cd $outpath
 	append using medline14_mesh_clean_temp
 	save medline14_mesh_clean_temp, replace
 }
 
 sort filenum pmid version meshid4
 compress
-cd $outpath\Data
+cd $outpath
 save medline14_mesh_clean, replace
 erase medline14_mesh_clean_temp.dta
 ********************************************************************************************************************
