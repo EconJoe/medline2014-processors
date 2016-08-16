@@ -1,12 +1,18 @@
 
-
+**************************************************************************************************
+**************************************************************************************************
+* User must set the outpath and the inpath.
+global inpath1="B:\Research\RAWDATA\MEDLINE\2014\Parsed\NGrams\dtafiles"
+global inpath2="B:\Research\RAWDATA\MEDLINE\2014\Processed"
+global outpath="B:\Research\RAWDATA\MEDLINE\2014\Processed"
+**************************************************************************************************
 
 clear
-cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Mentions
-use ngrams_mentions_3, replace
+cd $inpath2
+use ngrams_mentions, replace
 
-cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Vintage
-merge 1:1 ngram using ngrams_vintage_3
+cd $inpath2
+merge 1:1 ngram using ngrams_vintage
 drop _merge
 
 gsort vintage -mentions_bt ngram
@@ -28,8 +34,8 @@ gen double ngramid=_n
 order ngramid ngram
 
 compress
-cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Top
-save ngrams_top_3, replace
+cd $outpath
+save ngrams_top, replace
 
 
 
@@ -41,8 +47,8 @@ save ngrams_top_3, replace
 *************************************************************************************
 clear
 gen filenum=.
-cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Top
-save ngrams_top_pmids_001_3, replace
+cd $outpath
+save ngrams_top_pmids_001, replace
 
 local initialfiles 1 101 201 301 401 501 601 701
 local terminalfile=746
@@ -61,11 +67,11 @@ foreach h in `initialfiles' {
 	clear
 	set more off
 	gen ngramid=.
-	cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Top
-	save ngrams_top_pmids_001_`startfile'_`endfile'_3, replace
+	cd $outpath
+	save ngrams_top_pmids_001_`startfile'_`endfile', replace
 
-	cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Top
-	use ngrams_top_3, clear
+	cd $outpath
+	use ngrams_top, clear
 	keep if top_001==1
 	keep ngram ngramid vintage
 	tempfile hold1
@@ -75,7 +81,7 @@ foreach h in `initialfiles' {
 
 		display in red "------ File `i' --------"
 
-		cd B:\Research\RAWDATA\MEDLINE\2014\Parsed\NGrams\dtafiles
+		cd $inpath1
 		use medline14_`i'_ngrams, clear
 		keep if status=="MEDLINE"
 		keep if version==1
@@ -86,29 +92,27 @@ foreach h in `initialfiles' {
 		tempfile hold2
 		save `hold2', replace
 		
-		cd B:\Research\RAWDATA\MEDLINE\2014\Processed
+		cd $inpath2
 		use medline_wos_intersection if filenum==`i'
 		merge 1:m pmid using `hold2'
 		keep if _merge==3
-		drop if meshid4_ind==0
-		drop if retraction_ind==1
-		keep filenum pmid pubyear year version ngramid vintage ngram
+		keep filenum pmid pubyear version ngramid vintage ngram
 		
 		if (_N>0) {
 			compress
 			duplicates drop
 
-			cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Top
-			append using ngrams_top_pmids_001_`startfile'_`endfile'_3
-			save ngrams_top_pmids_001_`startfile'_`endfile'_3, replace
+			cd $outpath
+			append using ngrams_top_pmids_001_`startfile'_`endfile'
+			save ngrams_top_pmids_001_`startfile'_`endfile', replace
 		}
 	}
 	
-	cd B:\Research\RAWDATA\MEDLINE\2014\Processed\NGrams\Top
-	use ngrams_top_pmids_001_3, clear
-	append using ngrams_top_pmids_001_`startfile'_`endfile'_3
+	cd $outpath
+	use ngrams_top_pmids_001, clear
+	append using ngrams_top_pmids_001_`startfile'_`endfile'
 	compress
 	sort ngram
-	save ngrams_top_pmids_001_3, replace
-	*erase ngrams_top_pmids_001_`startfile'_`endfile'.dta
+	save ngrams_top_pmids_001, replace
+	erase ngrams_top_pmids_001_`startfile'_`endfile'.dta
 }
