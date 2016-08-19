@@ -1,6 +1,6 @@
 
 local startfile=1
-local endfile=50
+local endfile=746
 
 clear
 set more off

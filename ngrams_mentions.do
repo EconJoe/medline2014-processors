@@ -1,4 +1,6 @@
 
+* This dofile computes the total number of times that each n-gram in the MEDLINE-WOS corpus is mentioned.
+
 **************************************************************************************************
 **************************************************************************************************
 * User must set the outpath and the inpath.
@@ -14,6 +16,7 @@ gen mentions_bt=.
 cd $outpath
 save ngrams_mentions, replace
 
+* Break the files that we work with into multiples of 50. This prevents RAM from being exhausted.
 local initialfiles 1 26 51 76 101 151 126 176 201 226 251 276 301 326 351 376 401 426 451 476 501 526 551 576 601 626 651 676 701 726
 local terminalfile=746
 local fileinc=24
@@ -45,7 +48,8 @@ foreach h in `initialfiles' {
 		keep pmid ngram
 		tempfile hold
 		save `hold', replace
-
+		
+		* Only keep the intersection with WOS
 		cd $inpath2
 		use medline_wos_intersection if filenum==`i'
 		merge 1:m pmid using `hold'
@@ -53,8 +57,12 @@ foreach h in `initialfiles' {
 		keep pmid ngram
 
 		if (_N>0) {
+		
+			* Compute the number of "within" mentions. These are mentions that include multiple mentions within the same article.
 			gen mentions_wi=1
 			collapse (sum) mentions_wi, by(pmid ngram) fast
+			
+			* Compute the number of "between" mentions. These are mentions that only count at most one mention per article.
 			gen mentions_bt=1
 			collapse (sum) mentions_wi mentions_bt, by(ngram) fast
 

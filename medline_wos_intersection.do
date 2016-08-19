@@ -5,7 +5,7 @@ set more off
 **************************************************************************************************
 **************************************************************************************************
 * User must set the outpath and the inpath.
-global inpath1="Path to WOS data"
+global inpath1="B:\Research\RAWDATA\WOS"
 global inpath2="B:\Research\RAWDATA\MEDLINE\2014\Processed"
 global outpath="B:\Research\RAWDATA\MEDLINE\2014\Processed"
 **************************************************************************************************
@@ -72,7 +72,6 @@ merge 1:1 pmid using `hold'
 tab _merge
 keep if _merge==3
 drop _merge
-keep if pubyear>=1983 & pubyear<=2012
 
 sort filenum pmid pubyear
 compress

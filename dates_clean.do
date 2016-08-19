@@ -59,6 +59,6 @@ gen year=min(pubyear, articyear, medlinedateyear_imp)
 keep filenum pmid version pubyear articyear medlinedateyear_imp year
 order filenum pmid version year
 compress
-cd $outpath\Dates
+cd $outpath
 save medline14_dates_clean, replace
 ********************************************************************************************************************

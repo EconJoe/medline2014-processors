@@ -1,4 +1,8 @@
 
+* This dofile identifies the vintage of every n-gram in the MEDLINE-WOS corpus
+* Vintage is defined as the publication year of the first article in the MEDLINE-WOS corpus that uses the n-gram.
+
+
 **************************************************************************************************
 **************************************************************************************************
 * User must set the outpath and the inpath.
@@ -13,6 +17,7 @@ gen vintage=.
 cd $outpath
 save ngrams_vintage, replace
 
+* Break the files that we work with into multiples of 50. This prevents RAM from being exhausted.
 local initialfiles 1 26 51 76 101 126 151 176 201 226 251 276 301 326 351 376 401 426 451 476 501 526 551 576 601 626 651 676 701 726
 local terminalfile=746
 local fileinc=24
@@ -45,6 +50,7 @@ foreach h in `initialfiles' {
 		tempfile hold
 		save `hold', replace
 
+		* Only keep the intersection with WOS
 		cd $inpath2
 		use medline_wos_intersection if filenum==`i'
 		merge 1:m pmid using `hold'
@@ -53,11 +59,13 @@ foreach h in `initialfiles' {
 		rename pubyear vintage
 
 		if (_N>0) {
-			collapse (min) vintage, by(pmid ngram) fast
 			
+			* Identify the minimum within file `i'
+			collapse (min) vintage, by(pmid ngram) fast
 			compress
 			cd $outpath
 			append using ngrams_vintage_`startfile'_`endfile'
+			* Identify the minimum within file `startfile'_`endfile'
 			collapse (min) vintage, by(ngram) fast
 			save ngrams_vintage_`startfile'_`endfile', replace
 		}
@@ -69,6 +77,7 @@ foreach h in `initialfiles' {
 		cd $outpath
 		use ngrams_vintage, clear
 		append using ngrams_vintage_`startfile'_`endfile'
+		* Identify the minimum within the master file.
 		collapse (min) vintage, by(ngram) fast
 		compress
 		sort ngram
