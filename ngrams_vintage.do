@@ -14,8 +14,8 @@ gen ngram=""
 cd $outpath
 save ngrams_vintage, replace
 
-* Break the files that we work with into multiples of 50. This prevents RAM from being exhausted.
-local initialfiles 576 601 626 651 676 701 726
+* Break the files that we work with into multiples of 25. This prevents RAM from being exhausted.
+local initialfiles 1 26 51 76 101 126 151 176 201 226 251 276 301 326 351 376 401 426 451 476 501 526 551 576 601 626 651 676 701 726
 local terminalfile=746
 local fileinc=24
 
