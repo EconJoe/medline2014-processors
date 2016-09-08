@@ -57,7 +57,7 @@ foreach h in `initialfiles' {
 		
 		rename year vintage
 		* Keep only first version to avoid double coutning. This affects very few articles.
-		keep if version==1
+		*keep if version==1
 		* Drop if there was no n-gram
 		drop if dim=="null"
 		
@@ -74,8 +74,6 @@ foreach h in `initialfiles' {
 		use ngrams_vintage_`i'_temp, clear
 		
 		rename year vintage_med
-		* Keep only first version to avoid double coutning. This affects very few articles.
-		keep if version==1
 		* Drop if there was no n-gram
 		drop if dim=="null"
 		keep if status=="MEDLINE"
@@ -101,8 +99,8 @@ foreach h in `initialfiles' {
 		use ngrams_vintage_`i'_temp, clear
 		
 		rename year vintage_medwos
-		* Keep only first version to avoid double coutning. This affects very few articles.
-		keep if version==1
+		* I used to keep only the first version of each article (i.e. version==1). This resulted in some n-grams being eliminated because they
+		*   were used in a version after 1, but not in 1 itself.
 		* Drop if there was no n-gram--THIS IS DIFFERENT THAN PREVIOUS CODE--HELPS DISTINGUISH BETWEEN THE N-GRAM "null" and null (missing) values.
 		drop if dim=="null"
 		keep if status=="MEDLINE"
@@ -155,6 +153,3 @@ foreach h in `initialfiles' {
 	}
 	erase ngrams_vintage_`startfile'_`endfile'.dta
 }
-
-
-

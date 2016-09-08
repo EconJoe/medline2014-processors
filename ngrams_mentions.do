@@ -18,7 +18,7 @@ cd $outpath
 save ngrams_mentions, replace
 
 * Break the files that we work with into multiples of 50. This prevents RAM from being exhausted.
-local initialfiles 576 601 626 651 676 701 726
+local initialfiles 1 26 51 76 101 126 151 176 201 226 251 276 301 326 351 376 401 426 451 476 501 526 551 576 601 626 651 676 701 726
 local terminalfile=746
 local fileinc=24
 
@@ -50,8 +50,8 @@ foreach h in `initialfiles' {
 		* Compute mentions for all articles (No restrictions)
 		cd $inpath1
 		use medline14_`i'_ngrams, clear
-		* Keep only first version to avoid double coutning. This affects very few articles.
-		keep if version==1
+		* I used to keep only the first version of each article (i.e. version==1). This resulted in some n-grams being eliminated because they
+		*   were used in a version after 1, but not in 1 itself.
 		* Drop if there was no n-gram.
 		* Note that this step if different from previous versions of this code. In previous versions "null" values were treated as just another n-gram.
 		* This is incorrect, though it only affects the "null" n-gram counts.
@@ -75,8 +75,6 @@ foreach h in `initialfiles' {
 		* Compute mentions restricted to status=="MEDLINE" articles
 		cd $inpath1
 		use medline14_`i'_ngrams, clear
-		* Keep only first version to avoid double coutning. This affects very few articles.
-		keep if version==1
 		* Drop if there was no n-gram
 		drop if dim=="null"
 		keep if status=="MEDLINE"
@@ -105,14 +103,14 @@ foreach h in `initialfiles' {
 		* Compute mentions restricted to status=="MEDLINE" articles also contained in WOS (MEDLINE-WOS intersection)
 		cd $inpath1
 		use medline14_`i'_ngrams, clear
-		* Keep only first version to avoid double coutning. This affects very few articles.
-		keep if version==1
+
 		* Drop if there was no n-gram--THIS IS DIFFERENT THAN PREVIOUS CODE--HELPS DISTINGUISH BETWEEN THE N-GRAM "null" and null (missing) values.
 		drop if dim=="null"
 		keep if status=="MEDLINE"
 		tempfile hold
 		save `hold', replace
-		
+		* I used to keep only the first version of each article (i.e. version==1). This resulted in some n-grams being eliminated because they
+		*   were used in a version after 1, but not in 1 itself.
 		* Only keep the intersection with WOS
 		cd $inpath2
 		display in red "--- MEDLINE-WOS MERGE ----"
@@ -163,9 +161,3 @@ foreach h in `initialfiles' {
 	}
 	erase ngrams_mentions_`startfile'_`endfile'.dta
 }
-
-
-
-
-
-
