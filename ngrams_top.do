@@ -17,6 +17,11 @@ use ngrams_mentions, replace
 cd $inpath2
 merge 1:1 ngram using ngrams_vintage
 drop _merge
+keep ngram mentions_wi mentions_bt vintage
+
+cd $inpath2
+merge 1:1 ngram using ngrams_id
+drop _merge
 
 * Sort the top ngrams within each vintage
 gsort vintage -mentions_bt ngram
@@ -33,12 +38,11 @@ keep if top_001==1
 
 * Give each ngram a numeric identifier. This dramatically decreases storage requirements
 sort vintage ngram
-gen double ngramid=_n
 order ngramid ngram
 
 compress
 cd $outpath
-save ngrams_top, replace
+save ngrams_top_new, replace
 
 
 
@@ -51,7 +55,7 @@ save ngrams_top, replace
 clear
 gen filenum=.
 cd $outpath
-save ngrams_top_pmids_001, replace
+save ngrams_top_pmids_001_new, replace
 
 local initialfiles 1 101 201 301 401 501 601 701
 local terminalfile=746
@@ -74,7 +78,7 @@ foreach h in `initialfiles' {
 	save ngrams_top_pmids_001_`startfile'_`endfile', replace
 
 	cd $outpath
-	use ngrams_top, clear
+	use ngrams_top_new, clear
 	keep if top_001==1
 	keep ngram ngramid vintage
 	tempfile hold1
@@ -84,22 +88,19 @@ foreach h in `initialfiles' {
 
 		display in red "------ File `i' --------"
 
+		cd $outpath
+		use ngrams_top_new, clear
+		keep if top_001==1
+		keep ngram ngramid vintage
+		tempfile hold
+		save `hold', replace
+
 		cd $inpath1
 		use medline14_`i'_ngrams, clear
-		keep if status=="MEDLINE"
-		keep if version==1
-		merge m:1 ngram using `hold1'
+		keep filenum pmid version ngram
+		merge m:1 ngram using `hold'
 		keep if _merge==3
-		drop _merge
 		keep filenum pmid version ngramid vintage
-		tempfile hold2
-		save `hold2', replace
-		
-		cd $inpath2
-		use medline_wos_intersection if filenum==`i'
-		merge 1:m pmid using `hold2'
-		keep if _merge==3
-		keep filenum pmid pubyear version ngramid vintage ngram
 		
 		if (_N>0) {
 			compress
@@ -112,10 +113,17 @@ foreach h in `initialfiles' {
 	}
 	
 	cd $outpath
-	use ngrams_top_pmids_001, clear
+	use ngrams_top_pmids_001_new, clear
 	append using ngrams_top_pmids_001_`startfile'_`endfile'
 	compress
 	sort ngram
-	save ngrams_top_pmids_001, replace
+	save ngrams_top_pmids_001_new, replace
 	erase ngrams_top_pmids_001_`startfile'_`endfile'.dta
 }
+
+
+cd $inpath2
+use medline_wos_intersection if filenum==`i'
+merge 1:m pmid using `hold2'
+keep if _merge==3
+keep filenum pmid pubyear version ngramid vintage ngram
