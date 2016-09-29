@@ -33,7 +33,6 @@ gen top_001=0
 replace top_001=1 if pct<0.001
 gen top_0001=0
 replace top_0001=1 if pct<0.0001
-
 keep if top_001==1
 
 * Give each ngram a numeric identifier. This dramatically decreases storage requirements
@@ -42,11 +41,7 @@ order ngramid ngram
 
 compress
 cd $outpath
-save ngrams_top_new, replace
-
-
-
-
+save ngrams_top, replace
 ************************************************************************************
 *************************************************************************************
 
@@ -55,7 +50,7 @@ save ngrams_top_new, replace
 clear
 gen filenum=.
 cd $outpath
-save ngrams_top_pmids_001_new, replace
+save ngrams_top_pmids_001, replace
 
 local initialfiles 1 101 201 301 401 501 601 701
 local terminalfile=746
@@ -77,28 +72,15 @@ foreach h in `initialfiles' {
 	cd $outpath
 	save ngrams_top_pmids_001_`startfile'_`endfile', replace
 
-	cd $outpath
-	use ngrams_top_new, clear
-	keep if top_001==1
-	keep ngram ngramid vintage
-	tempfile hold1
-	save `hold1', replace
-
 	forvalues i=`startfile'/`endfile' {
 
 		display in red "------ File `i' --------"
 
-		cd $outpath
-		use ngrams_top_new, clear
-		keep if top_001==1
-		keep ngram ngramid vintage
-		tempfile hold
-		save `hold', replace
-
 		cd $inpath1
 		use medline14_`i'_ngrams, clear
 		keep filenum pmid version ngram
-		merge m:1 ngram using `hold'
+		cd $outpath
+		merge m:1 ngram using ngrams_top
 		keep if _merge==3
 		keep filenum pmid version ngramid vintage
 		
@@ -113,14 +95,13 @@ foreach h in `initialfiles' {
 	}
 	
 	cd $outpath
-	use ngrams_top_pmids_001_new, clear
+	use ngrams_top_pmids_001, clear
 	append using ngrams_top_pmids_001_`startfile'_`endfile'
 	compress
 	sort ngram
-	save ngrams_top_pmids_001_new, replace
+	save ngrams_top_pmids_001, replace
 	erase ngrams_top_pmids_001_`startfile'_`endfile'.dta
 }
-
 
 cd $inpath2
 use medline_wos_intersection if filenum==`i'
