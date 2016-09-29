@@ -43,7 +43,7 @@ foreach h in `initialfiles' {
 	compress
 	sort filenum pmid version pubtype
 	save medline14_pubtypes_all, replace
-	*erase medline14_pubtypes_`startfile'_`endfile'.dta
+	erase medline14_pubtypes_`startfile'_`endfile'.dta
 }
 
 
